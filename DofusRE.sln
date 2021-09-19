@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31624.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DofusRE", "DofusRE\DofusRE.csproj", "{EBD0EE6C-4FCE-48C6-A97E-173B3FBBA344}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DofusRE", "DofusRE\DofusRE.csproj", "{EBD0EE6C-4FCE-48C6-A97E-173B3FBBA344}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DofusRE.Tests", "DofusRE.Tests\DofusRE.Tests.csproj", "{C58CCE4B-AAC6-42F1-B71E-C37346756A1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DofusRE.Tests", "DofusRE.Tests\DofusRE.Tests.csproj", "{C58CCE4B-AAC6-42F1-B71E-C37346756A1C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
