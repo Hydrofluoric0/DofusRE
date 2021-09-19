@@ -5,33 +5,42 @@ using System.IO;
 
 namespace DofusRE.d2i
 {
-    public class D2iFile : IDisposable
+    public class D2iReader : IDisposable
     {
         private BigEndianReader _reader;
         private Dictionary<int, int> _indexes;
         private Dictionary<int, int> _textSortIndex;
-        private Dictionary<string, int> _textIndexes;
+        private Dictionary<string, int> _namedTextIndexes;
         private Dictionary<int, int> _unDiacriticalIndex;
-        private Dictionary<int, string> _texts;
+
+        private List<D2iText> _texts;
+        private List<D2iNamedText> _namedTexts;
 
         public int Count => _texts.Count;
         public long Length => _reader.Length;
-        public Dictionary<int, string> Texts => _texts;
+        public List<D2iText> Texts => _texts;
+        public List<D2iNamedText> NamedTexts => _namedTexts;
 
-        public D2iFile(string filepath)
+        public D2iReader(string filepath)
         {
-            this._texts = new Dictionary<int, string>();
+            this._texts = new List<D2iText>();
+            this._namedTexts = new List<D2iNamedText>();
+
             this._indexes = new Dictionary<int, int>();
-            this._textIndexes = new Dictionary<string, int>();
+            this._namedTextIndexes = new Dictionary<string, int>();
             this._textSortIndex = new Dictionary<int, int>();
             this._unDiacriticalIndex = new Dictionary<int, int>();
 
             this._reader = new BigEndianReader(filepath);
+        }
 
+        public void Read()
+        {
             readTextIndexes();
             readNamedTextIndexes();
             readSortedTextIndexes();
             readTexts();
+            readNamedTexts();
         }
 
         private void readTextIndexes()
@@ -70,7 +79,7 @@ namespace DofusRE.d2i
                 var key = this._reader.ReadUTF();
                 var pointer = this._reader.ReadInt();
 
-                this._textIndexes[key] = pointer;
+                this._namedTextIndexes[key] = pointer;
 
                 var delta = (int)(this._reader.Position - position);
                 indexesLength -= delta;
@@ -96,23 +105,38 @@ namespace DofusRE.d2i
 
         private void readTexts()
         {
-            var min = -1;
-            var max = -1;
             foreach (var entry in _indexes)
             {
-                var id = entry.Key;
-                var position = entry.Value;
+                var key = entry.Key;
+                var pointer = entry.Value;
 
-                _reader.Seek(position, SeekOrigin.Begin);
+                _reader.Seek(pointer, SeekOrigin.Begin);
                 var text = _reader.ReadUTF();
 
-                _texts[id] = text;
+                var isDiac = this._unDiacriticalIndex.ContainsKey(key);
+                if (isDiac)
+                {
+                    var undiacPointer = this._unDiacriticalIndex[key];
+                    _reader.Seek(pointer, SeekOrigin.Begin);
+                    var undiacText = _reader.ReadUTF();
+
+                    this._texts.Add(new D2iText(key, text, isDiac, undiacText));
+                }
             }
         }
 
-        public string GetText(int key)
+        private void readNamedTexts()
         {
-            return this._texts[key];
+            foreach (var entry in _namedTextIndexes)
+            {
+                var key = entry.Key;
+                var pointer = entry.Value;
+
+                this._reader.Seek(pointer, SeekOrigin.Begin);
+                var text = this._reader.ReadUTF();
+
+                this._namedTexts.Add(new D2iNamedText(key, text));
+            }
         }
 
         public void Dispose()
