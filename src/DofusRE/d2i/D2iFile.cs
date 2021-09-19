@@ -63,8 +63,6 @@ namespace DofusRE.d2i
 
         private void readNamedTextIndexes()
         {
-            Console.WriteLine($"Named texts indexes table");
-            Console.WriteLine($"\tstart position : {this._reader.Position}");
             var indexesLength = this._reader.ReadInt();
             do
             {
@@ -78,7 +76,6 @@ namespace DofusRE.d2i
                 indexesLength -= delta;
             }
             while (indexesLength > 0);
-            Console.WriteLine($"\tend position : {this._reader.Position}");
         }
 
         private void readSortedTextIndexes()
