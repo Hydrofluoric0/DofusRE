@@ -9,11 +9,11 @@ Dofus client versions tested:
 ## Features  
 * D2i
   + Read a d2i file
-  + Extract the d2i file content into CSV
+  + Extract the d2i file content into CSV (coming soon)
   + Editing/Writing a d2i file (coming soon)
 * D2o
   + Reading a d2o file
-  + Extract the d2o file content into CSV
+  + Extract the d2o file content into CSV (coming soon)
   + Editing/Writing a d2i file (coming soon)
 
 ## Documentation
