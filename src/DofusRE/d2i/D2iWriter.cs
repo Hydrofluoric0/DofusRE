@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DofusRE.d2i
 {
-    class D2iWriter
+    public class D2iWriter
     {
         private BigEndianWriter m_writer;
         private List<D2iText> m_texts;
@@ -67,8 +67,11 @@ namespace DofusRE.d2i
             var tablePointer = (int)this.m_writer.Position;
             this.m_writer.Seek(0, SeekOrigin.Begin);
             this.m_writer.WriteInt(tablePointer);
+
             this.m_writer.Seek(tablePointer, SeekOrigin.Begin);
-            
+            // reserve space for table length
+            this.m_writer.WriteInt(0);
+
             foreach (var entry in m_texts)
             {
                 var pointer = this.m_textIndexes[entry.Key];
@@ -82,10 +85,20 @@ namespace DofusRE.d2i
                     this.m_writer.WriteInt(undiacPointer);
                 }
             }
+
+            var currentPosition = (int)this.m_writer.Position;
+            var tableLength = currentPosition - tablePointer;
+            this.m_writer.Seek(tablePointer, SeekOrigin.Begin);
+            this.m_writer.WriteInt(tableLength);
+            this.m_writer.Seek(currentPosition, SeekOrigin.Begin);
         }
 
         private void writeNamedTextIndexes()
         {
+            // reserve space for table length
+            this.m_writer.WriteInt(0);
+            var tablePosition = (int)this.m_writer.Position;
+
             foreach (var entry in m_namedTexts)
             {
                 var pointer = this.m_namedTextIndexes[entry.Key];
@@ -93,14 +106,30 @@ namespace DofusRE.d2i
                 this.m_writer.WriteUTF(entry.Key);
                 this.m_writer.WriteInt(pointer);
             }
+
+            var currentPosition = (int)this.m_writer.Position;
+            var tableLength = currentPosition - tablePosition;
+            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
+            this.m_writer.WriteInt(tableLength);
+            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
         }
 
         private void writeSortedTextIndexes()
         {
+            // reserve space for table length
+            this.m_writer.WriteInt(0);
+            var tablePosition = (int)this.m_writer.Position;
+
             foreach (var entry in m_texts)
             {
                 this.m_writer.WriteInt(entry.Key);
             }
+
+            var currentPosition = (int)this.m_writer.Position;
+            var tableLength = currentPosition - tablePosition;
+            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
+            this.m_writer.WriteInt(tableLength);
+            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
         }
 
         public void Dispose()

@@ -2,14 +2,13 @@ using DofusRE.io;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
-using System.IO.Abstractions.TestingHelpers;
 
 namespace DofusRE.Tests
 {
     [TestClass]
     public class BigEndianTests
     {
-        public readonly string TmpDirectory = System.IO.Path.GetTempPath();
+        public readonly string TmpDirectory = Path.GetTempPath();
 
         [TestMethod]
         public void BigEndian_Tests()
