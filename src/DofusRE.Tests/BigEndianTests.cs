@@ -1,3 +1,4 @@
+using DofusRE.d2i;
 using DofusRE.io;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -40,5 +41,20 @@ namespace DofusRE.Tests
             Assert.IsTrue(reader.ReadUTF() == MAGIC);
         }
 
+        [TestMethod]
+        public void D2i_Tests()
+        {
+            var d2iReader = new D2iReader(@"./assets/i18n_fr.d2i");
+            d2iReader.Read();
+
+            var uuid = Guid.NewGuid();
+            var output = Path.Combine(Path.GetTempPath(), $"output-{uuid}.d2i");
+            var d2iWriter = new D2iWriter(output, true);
+            d2iWriter.Write(d2iReader.Texts, d2iReader.NamedTexts);
+            d2iWriter.Dispose();
+
+            var d2iReaderbis = new D2iReader(output);
+            d2iReader.Read();
+        }
     }
 }

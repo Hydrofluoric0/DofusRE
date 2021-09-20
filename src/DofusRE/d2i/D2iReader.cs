@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace DofusRE.d2i
 {
@@ -45,11 +46,15 @@ namespace DofusRE.d2i
 
         private void readTextIndexes()
         {
+            Console.WriteLine($"[readTextIndexes] text indexes pointer read at {_reader.Position}");
             var indexesPointer = this._reader.ReadInt();
+            Console.WriteLine($"[readTextIndexes] text indexes pointer value : {indexesPointer}");
             this._reader.Seek(indexesPointer, SeekOrigin.Begin);
-
+            Console.WriteLine($"[readTextIndexes] text indexes length read at {_reader.Position}");
             var indexesLength = this._reader.ReadInt();
+            Console.WriteLine($"[readTextIndexes] text indexes length value : {indexesLength}");
 
+            Console.WriteLine($"[readTextIndexes] text indexes start position : {this._reader.Position}");
             for (uint i = 0; i < indexesLength; i += 9)
             {
                 var key = this._reader.ReadInt();
@@ -63,11 +68,8 @@ namespace DofusRE.d2i
                     i += 4;
                     this._unDiacriticalIndex[key] = this._reader.ReadInt();
                 }
-                else
-                {
-                    this._unDiacriticalIndex[key] = pointer;
-                }
             }
+            Console.WriteLine($"[readTextIndexes] text indexes end position : {this._reader.Position}");
         }
 
         private void readNamedTextIndexes()
@@ -117,10 +119,14 @@ namespace DofusRE.d2i
                 if (isDiac)
                 {
                     var undiacPointer = this._unDiacriticalIndex[key];
-                    _reader.Seek(pointer, SeekOrigin.Begin);
+                    _reader.Seek(undiacPointer, SeekOrigin.Begin);
                     var undiacText = _reader.ReadUTF();
 
                     this._texts.Add(new D2iText(key, text, isDiac, undiacText));
+                }
+                else
+                {
+                    this._texts.Add(new D2iText(key, text, isDiac));
                 }
             }
         }

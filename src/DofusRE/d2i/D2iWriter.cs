@@ -17,31 +17,99 @@ namespace DofusRE.d2i
         private Dictionary<string, int> m_namedTextIndexes;
         private Dictionary<int, int> m_undiacriticalTextIndexes;
 
-        public D2iWriter(string output_path)
+        public D2iWriter(string output_path, bool create=false)
         {
-            this.m_writer = new BigEndianWriter(output_path);
+            this.m_writer = new BigEndianWriter(output_path, create);
+            this.m_textIndexes = new Dictionary<int, int>();
+            this.m_namedTextIndexes = new Dictionary<string, int>();
+            this.m_undiacriticalTextIndexes = new Dictionary<int, int>();
         }
         
         public void Write(List<D2iText> texts, List<D2iNamedText> named_texts)
         {
             this.m_texts = texts;
             this.m_namedTexts = named_texts;
-            this.m_textIndexes = new Dictionary<int, int>();
-            this.m_namedTextIndexes = new Dictionary<string, int>();
-            this.m_undiacriticalTextIndexes = new Dictionary<int, int>();
 
+            // reserve space for text indexes pointer
+            this.m_writer.WriteInt(0);
+
+            // write texts (both named & unnamed) first
             writeTexts();
             writeNamedTexts();
-            writeTextIndexes();
-            writeNamedTextIndexes();
-            writeSortedTextIndexes();
+
+            // write text indexes table pointer at reserved space
+            var position = (int)this.m_writer.Position;
+            this.m_writer.Seek(0, SeekOrigin.Begin);
+            Console.WriteLine($"[Write] indexes table pointer position : {this.m_writer.Position}");
+            this.m_writer.WriteInt(position);
+            this.m_writer.Seek(position, SeekOrigin.Begin);
+            Console.WriteLine($"[Write] indexes table pointer value : {position}");
+
+            // finally, writte indexes tables
+            writeTextIndexesTable();
+            writeNamedTextIndexesTable();
+            writeSortedTextIndexesTable();
+        }
+        private void writeIndexesTableWrapper(Action func)
+        {
+            var lengthPosition = (int)this.m_writer.Position;
+            Console.WriteLine($"[{func.Method.Name}] table length position : {lengthPosition}");
+
+            // reserve space for table length;
+            this.m_writer.WriteInt(0);
+
+            // let the writing function do it's stuff
+            var startPosition = (int)this.m_writer.Position;
+            func();
+            var endPosition = (int)this.m_writer.Position;
+
+            // writes table length in reserved space
+            var length = endPosition - startPosition;
+            Console.WriteLine($"[{func.Method.Name}] table content length : {length}");
+            this.m_writer.Seek(lengthPosition, SeekOrigin.Begin);
+            this.m_writer.WriteInt(length);
+            this.m_writer.Seek(endPosition, SeekOrigin.Begin);
+        }
+        private void writeTextIndexesTable() => writeIndexesTableWrapper(writeTextIndexes);
+        private void writeNamedTextIndexesTable() => writeIndexesTableWrapper(writeNamedTextIndexes);
+        private void writeSortedTextIndexesTable() => writeIndexesTableWrapper(writeSortedTextIndexes);
+        private void writeTextIndexes()
+        {
+            foreach (var entry in m_texts)
+            {
+                var pointer = this.m_textIndexes[entry.Key];
+
+                this.m_writer.WriteInt(entry.Key);
+                this.m_writer.WriteBoolean(entry.isDiacritical);
+                this.m_writer.WriteInt(pointer);
+
+                if (entry.isDiacritical)
+                {
+                    var undiacPointer = this.m_undiacriticalTextIndexes[entry.Key];
+                    this.m_writer.WriteInt(undiacPointer);
+                }
+            }
+        }
+        private void writeNamedTextIndexes()
+        {
+            foreach (var entry in m_namedTexts)
+            {
+                var pointer = this.m_namedTextIndexes[entry.Key];
+
+                this.m_writer.WriteUTF(entry.Key);
+                this.m_writer.WriteInt(pointer);
+            }
+        }
+        private void writeSortedTextIndexes()
+        {
+            foreach (var entry in m_texts)
+            {
+                this.m_writer.WriteInt(entry.Key);
+            }
         }
 
         private void writeTexts()
         {
-            // reserve space for indexes table pointer
-            this.m_writer.WriteInt(0);
-
             foreach (var entry in m_texts)
             {
                 this.m_textIndexes[entry.Key] = (int)this.m_writer.Position;
@@ -60,76 +128,6 @@ namespace DofusRE.d2i
                 this.m_namedTextIndexes[entry.Key] = (int)this.m_writer.Position;
                 this.m_writer.WriteUTF(entry.Text);
             }
-
-        }
-        private void writeTextIndexes()
-        {
-            var tablePointer = (int)this.m_writer.Position;
-            this.m_writer.Seek(0, SeekOrigin.Begin);
-            this.m_writer.WriteInt(tablePointer);
-
-            this.m_writer.Seek(tablePointer, SeekOrigin.Begin);
-            // reserve space for table length
-            this.m_writer.WriteInt(0);
-
-            foreach (var entry in m_texts)
-            {
-                var pointer = this.m_textIndexes[entry.Key];
-
-                this.m_writer.WriteInt(entry.Key);
-                this.m_writer.WriteInt(pointer);
-                this.m_writer.WriteBoolean(entry.isDiacritical);
-                if (entry.isDiacritical)
-                {
-                    var undiacPointer = this.m_undiacriticalTextIndexes[entry.Key];
-                    this.m_writer.WriteInt(undiacPointer);
-                }
-            }
-
-            var currentPosition = (int)this.m_writer.Position;
-            var tableLength = currentPosition - tablePointer;
-            this.m_writer.Seek(tablePointer, SeekOrigin.Begin);
-            this.m_writer.WriteInt(tableLength);
-            this.m_writer.Seek(currentPosition, SeekOrigin.Begin);
-        }
-
-        private void writeNamedTextIndexes()
-        {
-            // reserve space for table length
-            this.m_writer.WriteInt(0);
-            var tablePosition = (int)this.m_writer.Position;
-
-            foreach (var entry in m_namedTexts)
-            {
-                var pointer = this.m_namedTextIndexes[entry.Key];
-
-                this.m_writer.WriteUTF(entry.Key);
-                this.m_writer.WriteInt(pointer);
-            }
-
-            var currentPosition = (int)this.m_writer.Position;
-            var tableLength = currentPosition - tablePosition;
-            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
-            this.m_writer.WriteInt(tableLength);
-            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
-        }
-
-        private void writeSortedTextIndexes()
-        {
-            // reserve space for table length
-            this.m_writer.WriteInt(0);
-            var tablePosition = (int)this.m_writer.Position;
-
-            foreach (var entry in m_texts)
-            {
-                this.m_writer.WriteInt(entry.Key);
-            }
-
-            var currentPosition = (int)this.m_writer.Position;
-            var tableLength = currentPosition - tablePosition;
-            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
-            this.m_writer.WriteInt(tableLength);
-            this.m_writer.Seek(tablePosition, SeekOrigin.Begin);
         }
 
         public void Dispose()
