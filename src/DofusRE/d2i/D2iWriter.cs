@@ -40,10 +40,8 @@ namespace DofusRE.d2i
             // write text indexes table pointer at reserved space
             var position = (int)this.m_writer.Position;
             this.m_writer.Seek(0, SeekOrigin.Begin);
-            Console.WriteLine($"[Write] indexes table pointer position : {this.m_writer.Position}");
             this.m_writer.WriteInt(position);
             this.m_writer.Seek(position, SeekOrigin.Begin);
-            Console.WriteLine($"[Write] indexes table pointer value : {position}");
 
             // finally, writte indexes tables
             writeTextIndexesTable();
@@ -53,7 +51,6 @@ namespace DofusRE.d2i
         private void writeIndexesTableWrapper(Action func)
         {
             var lengthPosition = (int)this.m_writer.Position;
-            Console.WriteLine($"[{func.Method.Name}] table length position : {lengthPosition}");
 
             // reserve space for table length;
             this.m_writer.WriteInt(0);
@@ -65,7 +62,6 @@ namespace DofusRE.d2i
 
             // writes table length in reserved space
             var length = endPosition - startPosition;
-            Console.WriteLine($"[{func.Method.Name}] table content length : {length}");
             this.m_writer.Seek(lengthPosition, SeekOrigin.Begin);
             this.m_writer.WriteInt(length);
             this.m_writer.Seek(endPosition, SeekOrigin.Begin);

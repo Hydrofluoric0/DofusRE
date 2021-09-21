@@ -20,5 +20,21 @@ namespace DofusRE.d2i
             this.isDiacritical = is_diac;
             this.UndiacriticalText = undiac_text;
         }
+
+        public static bool operator == (D2iText a, D2iText b)
+        {
+            var keyMatch = a.Key == b.Key;
+            var textMatch = a.Text == b.Text;
+            var isDiacMatch = a.isDiacritical == b.isDiacritical;
+            if (isDiacMatch)
+            {
+                return a.UndiacriticalText == b.UndiacriticalText;
+            }
+            return keyMatch && textMatch && isDiacMatch;
+        }
+        public static bool operator !=(D2iText a, D2iText b)
+        {
+            return !(a == b);
+        }
     }
 }

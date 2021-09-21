@@ -67,8 +67,9 @@ namespace DofusRE.io
 
         public void WriteUTF(string utf)
         {
-            var length = (ushort)utf.Length;
             var content = Encoding.UTF8.GetBytes(utf);
+            var length = (ushort)content.Length;
+
 
             WriteUShort(length);
             this.m_stream.Write(content, 0, length);

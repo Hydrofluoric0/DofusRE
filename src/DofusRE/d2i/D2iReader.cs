@@ -8,31 +8,29 @@ namespace DofusRE.d2i
 {
     public class D2iReader : IDisposable
     {
-        private BigEndianReader _reader;
-        private Dictionary<int, int> _indexes;
-        private Dictionary<int, int> _textSortIndex;
-        private Dictionary<string, int> _namedTextIndexes;
-        private Dictionary<int, int> _unDiacriticalIndex;
+        private BigEndianReader m_reader;
+        private Dictionary<int, int> m_textIndexes;
+        private Dictionary<int, int> m_sortedTextIndexes;
+        private Dictionary<string, int> m_namedTextIndexes;
+        private Dictionary<int, int> m_undiacriticalTextIndexes;
 
-        private List<D2iText> _texts;
-        private List<D2iNamedText> _namedTexts;
+        private Dictionary<int, D2iText> m_texts;
+        private Dictionary<string, D2iNamedText> m_namedTexts;
 
-        public int Count => _texts.Count;
-        public long Length => _reader.Length;
-        public List<D2iText> Texts => _texts;
-        public List<D2iNamedText> NamedTexts => _namedTexts;
+        public Dictionary<int, D2iText> Texts => m_texts;
+        public Dictionary<string, D2iNamedText> NamedTexts => m_namedTexts;
 
         public D2iReader(string filepath)
         {
-            this._texts = new List<D2iText>();
-            this._namedTexts = new List<D2iNamedText>();
+            this.m_texts = new Dictionary<int, D2iText>();
+            this.m_namedTexts = new Dictionary<string, D2iNamedText>();
 
-            this._indexes = new Dictionary<int, int>();
-            this._namedTextIndexes = new Dictionary<string, int>();
-            this._textSortIndex = new Dictionary<int, int>();
-            this._unDiacriticalIndex = new Dictionary<int, int>();
+            this.m_textIndexes = new Dictionary<int, int>();
+            this.m_namedTextIndexes = new Dictionary<string, int>();
+            this.m_sortedTextIndexes = new Dictionary<int, int>();
+            this.m_undiacriticalTextIndexes = new Dictionary<int, int>();
 
-            this._reader = new BigEndianReader(filepath);
+            this.m_reader = new BigEndianReader(filepath);
         }
 
         public void Read()
@@ -46,44 +44,38 @@ namespace DofusRE.d2i
 
         private void readTextIndexes()
         {
-            Console.WriteLine($"[readTextIndexes] text indexes pointer read at {_reader.Position}");
-            var indexesPointer = this._reader.ReadInt();
-            Console.WriteLine($"[readTextIndexes] text indexes pointer value : {indexesPointer}");
-            this._reader.Seek(indexesPointer, SeekOrigin.Begin);
-            Console.WriteLine($"[readTextIndexes] text indexes length read at {_reader.Position}");
-            var indexesLength = this._reader.ReadInt();
-            Console.WriteLine($"[readTextIndexes] text indexes length value : {indexesLength}");
+            var indexesPointer = this.m_reader.ReadInt();
+            this.m_reader.Seek(indexesPointer, SeekOrigin.Begin);
+            var indexesLength = this.m_reader.ReadInt();
 
-            Console.WriteLine($"[readTextIndexes] text indexes start position : {this._reader.Position}");
             for (uint i = 0; i < indexesLength; i += 9)
             {
-                var key = this._reader.ReadInt();
-                var diacriticalText = this._reader.ReadBoolean();
-                var pointer = this._reader.ReadInt();
+                var key = this.m_reader.ReadInt();
+                var diacriticalText = this.m_reader.ReadBoolean();
+                var pointer = this.m_reader.ReadInt();
 
-                this._indexes[key] = pointer;
+                this.m_textIndexes[key] = pointer;
 
                 if (diacriticalText)
                 {
                     i += 4;
-                    this._unDiacriticalIndex[key] = this._reader.ReadInt();
+                    this.m_undiacriticalTextIndexes[key] = this.m_reader.ReadInt();
                 }
             }
-            Console.WriteLine($"[readTextIndexes] text indexes end position : {this._reader.Position}");
         }
 
         private void readNamedTextIndexes()
         {
-            var indexesLength = this._reader.ReadInt();
+            var indexesLength = this.m_reader.ReadInt();
             do
             {
-                var position = this._reader.Position;
-                var key = this._reader.ReadUTF();
-                var pointer = this._reader.ReadInt();
+                var position = this.m_reader.Position;
+                var key = this.m_reader.ReadUTF();
+                var pointer = this.m_reader.ReadInt();
 
-                this._namedTextIndexes[key] = pointer;
+                this.m_namedTextIndexes[key] = pointer;
 
-                var delta = (int)(this._reader.Position - position);
+                var delta = (int)(this.m_reader.Position - position);
                 indexesLength -= delta;
             }
             while (indexesLength > 0);
@@ -92,62 +84,62 @@ namespace DofusRE.d2i
         private void readSortedTextIndexes()
         {
             var index = 1;
-            var indexesLength = this._reader.ReadInt();
+            var indexesLength = this.m_reader.ReadInt();
             while (indexesLength > 0)
             {
-                var position = this._reader.Position;
-                var key = this._reader.ReadInt();
+                var position = this.m_reader.Position;
+                var key = this.m_reader.ReadInt();
 
-                this._textSortIndex[key] = index++;
+                this.m_sortedTextIndexes[key] = index++;
 
-                var delta = (int)(this._reader.Position - position);
+                var delta = (int)(this.m_reader.Position - position);
                 indexesLength -= delta;
             }
         }
 
         private void readTexts()
         {
-            foreach (var entry in _indexes)
+            foreach (var entry in m_textIndexes)
             {
                 var key = entry.Key;
                 var pointer = entry.Value;
 
-                _reader.Seek(pointer, SeekOrigin.Begin);
-                var text = _reader.ReadUTF();
+                    m_reader.Seek(pointer, SeekOrigin.Begin);
+                var text = m_reader.ReadUTF();
 
-                var isDiac = this._unDiacriticalIndex.ContainsKey(key);
+                var isDiac = this.m_undiacriticalTextIndexes.ContainsKey(key);
                 if (isDiac)
                 {
-                    var undiacPointer = this._unDiacriticalIndex[key];
-                    _reader.Seek(undiacPointer, SeekOrigin.Begin);
-                    var undiacText = _reader.ReadUTF();
+                    var undiacPointer = this.m_undiacriticalTextIndexes[key];
+                    m_reader.Seek(undiacPointer, SeekOrigin.Begin);
+                    var undiacText = m_reader.ReadUTF();
 
-                    this._texts.Add(new D2iText(key, text, isDiac, undiacText));
+                    this.m_texts.Add(key, new D2iText(key, text, isDiac, undiacText));
                 }
                 else
                 {
-                    this._texts.Add(new D2iText(key, text, isDiac));
+                    this.m_texts.Add(key, new D2iText(key, text, isDiac));
                 }
             }
         }
 
         private void readNamedTexts()
         {
-            foreach (var entry in _namedTextIndexes)
+            foreach (var entry in m_namedTextIndexes)
             {
                 var key = entry.Key;
                 var pointer = entry.Value;
 
-                this._reader.Seek(pointer, SeekOrigin.Begin);
-                var text = this._reader.ReadUTF();
+                this.m_reader.Seek(pointer, SeekOrigin.Begin);
+                var text = this.m_reader.ReadUTF();
 
-                this._namedTexts.Add(new D2iNamedText(key, text));
+                this.m_namedTexts.Add(key, new D2iNamedText(key, text));
             }
         }
 
         public void Dispose()
         {
-            this._reader.Dispose();
+            this.m_reader.Dispose();
         }
     }
 }
