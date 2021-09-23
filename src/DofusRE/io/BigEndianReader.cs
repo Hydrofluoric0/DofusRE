@@ -103,16 +103,6 @@ namespace DofusRE.io
 
             return Encoding.UTF8.GetString(content);
         }
-        public string ReadUTF(out int bytes_read)
-        {
-            var length = ReadUShort();
-            var content = new byte[length];
-
-            this.m_stream.Read(content, 0, length);
-            bytes_read = length;
-
-            return Encoding.UTF8.GetString(content);
-        }
 
         public int ReadInt()
         {
