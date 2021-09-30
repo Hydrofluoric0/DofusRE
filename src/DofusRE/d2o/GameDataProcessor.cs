@@ -1,4 +1,5 @@
 ﻿using DofusRE.io;
+using System;
 
 namespace DofusRE.d2o
 {

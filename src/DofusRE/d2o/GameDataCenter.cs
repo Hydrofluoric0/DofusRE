@@ -12,9 +12,11 @@ namespace DofusRE.d2o
 
         private static void initGameDataClasses()
         {
+            m_classes = new Dictionary<string, Type>();
+
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
-                var interfaceType = typeof(IGameDataClass);
+                var interfaceType = typeof(AbstractGameDataClass);
                 var types = asm.GetTypes().Where(t => interfaceType.IsAssignableFrom(t) && t.FullName != interfaceType.FullName).ToList();
                 foreach (var type in types)
                 {

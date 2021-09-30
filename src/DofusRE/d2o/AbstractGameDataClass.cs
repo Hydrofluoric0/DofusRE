@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace DofusRE.d2o
 {
-    public interface IGameDataClass { }
+    public abstract class AbstractGameDataClass { }
 }

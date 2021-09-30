@@ -39,13 +39,7 @@ namespace DofusRE.io
 
         public void WriteByte(byte value) => this.m_stream.WriteByte(value);
 
-        public byte[] WriteBytes(int n)
-        {
-            var buffer = new byte[n];
-            this.m_stream.Write(buffer, 0, n);
-
-            return buffer;
-        }
+        public void WriteBytes(byte[] buffer) => this.m_stream.Write(buffer, 0, buffer.Length);
 
         public void WriteDouble(double value)
         {
@@ -62,14 +56,12 @@ namespace DofusRE.io
             var buffer = new byte[sizeof(ushort)];
             BinaryPrimitives.WriteUInt16BigEndian(buffer, value);
             this.m_stream.Write(buffer, 0, sizeof(ushort));
-
         }
 
         public void WriteUTF(string utf)
         {
             var content = Encoding.UTF8.GetBytes(utf);
             var length = (ushort)content.Length;
-
 
             WriteUShort(length);
             this.m_stream.Write(content, 0, length);

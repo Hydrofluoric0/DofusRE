@@ -15,49 +15,38 @@ namespace DofusRE.d2o
 
         private BigEndianReader m_reader;
         private Dictionary<int, int> m_indexes;
+        private Dictionary<int, AbstractGameDataClass> m_gameDataClasses;
         private Dictionary<int, GameDataClassDefinition> m_classesDefinitions;
         private Dictionary<int, GameDataProcessor> m_processors;
 
+        public Dictionary<int, AbstractGameDataClass> Classes => m_gameDataClasses;
+        public Dictionary<int, GameDataClassDefinition> ClassesDefinitions => m_classesDefinitions;
 
         public D2oReader(string filepath)
         {
             this.m_reader = new BigEndianReader(filepath);
             this.m_indexes = new Dictionary<int, int>();
+            this.m_gameDataClasses = new Dictionary<int, AbstractGameDataClass>();
             this.m_processors = new Dictionary<int, GameDataProcessor>();
             this.m_classesDefinitions = new Dictionary<int, GameDataClassDefinition>();
         }
 
         public void Read()
         {
+            readHeader();
+            readIndexes();
+            readClassesDefinitions();
+            readProcessors();
+            readClasses();
+        }
 
+        private void readHeader()
+        {
             var headerBytes = this.m_reader.ReadBytes(D2O_HEADER.Length);
             var header = Encoding.ASCII.GetString(headerBytes);
             if (header != D2O_HEADER)
             {
                 throw new Exception("malformated game data file.");
-            }
-
-            readIndexes();
-            readClassesDefinitions();
-            if (this.m_reader.BytesAvailable > 0)
-            {
-                readProcessors();
-            }
-
-            foreach (var entry in this.m_indexes)
-            {
-                var key = entry.Key;
-                var position = entry.Value;
-
-                this.m_reader.Seek(position, SeekOrigin.Begin);
-                
-                var classDefinitionIdentifier = this.m_reader.ReadInt();
-                var classDef = this.m_classesDefinitions[classDefinitionIdentifier];
-                foreach (var field in classDef.Fields)
-                {
-                    var strType = Enum.GetName(typeof(GameDataFieldType), field.Type);
-                }
-                var fields = classDef.Read();
             }
         }
 
@@ -105,8 +94,40 @@ namespace DofusRE.d2o
 
         private void readProcessors()
         {
+            if (this.m_reader.BytesAvailable <= 0)
+            {
+                return;
+            }
+
             var processor = new GameDataProcessor(this.m_reader);
+            //this.m_processors.Add(processor. pprocessor);
         }
 
+        private void readClasses()
+        {
+            int min = -1, max = -1;
+
+            foreach (var entry in this.m_indexes)
+            {
+                if (min == -1 || max == -1)
+                {
+                    min = entry.Value;
+                    max = entry.Value;
+                }
+                min = min > entry.Value ? entry.Value : min;
+                max = max < entry.Value ? entry.Value : max;
+
+                var key = entry.Key;
+                var position = entry.Value;
+                this.m_reader.Seek(position, SeekOrigin.Begin);
+
+                var classDefinitionIdentifier = this.m_reader.ReadInt();
+                var classDef = this.m_classesDefinitions[classDefinitionIdentifier];
+                
+                var gameDataClass = classDef.Read();
+                this.m_gameDataClasses.Add(key, gameDataClass);
+            }
+        }
     }
 }
+ 
