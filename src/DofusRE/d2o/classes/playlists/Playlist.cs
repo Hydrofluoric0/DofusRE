@@ -1,14 +1,13 @@
 
 
-// Generated on 09/25/2021 21:18:15
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class Playlist : AbstractGameDataClass
+    public class Playlist : GameDataClass
     {
         public const int AMBIENT_TYPE_ROLEPLAY = 1;
         public const int AMBIENT_TYPE_AMBIENT = 2;

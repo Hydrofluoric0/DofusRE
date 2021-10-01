@@ -15,20 +15,20 @@ namespace DofusRE.d2o
 
         private BigEndianReader m_reader;
         private Dictionary<int, int> m_indexes;
-        private Dictionary<int, AbstractGameDataClass> m_gameDataClasses;
-        private Dictionary<int, GameDataClassDefinition> m_classesDefinitions;
+        private Dictionary<int, GameDataClass> m_gameDataClasses;
+        private Dictionary<int, GameDataClassDefinition> m_classDefinitions;
         private Dictionary<int, GameDataProcessor> m_processors;
 
-        public Dictionary<int, AbstractGameDataClass> Classes => m_gameDataClasses;
-        public Dictionary<int, GameDataClassDefinition> ClassesDefinitions => m_classesDefinitions;
+        public Dictionary<int, GameDataClass> Classes => m_gameDataClasses;
+        public Dictionary<int, GameDataClassDefinition> ClassesDefinitions => m_classDefinitions;
 
         public D2oReader(string filepath)
         {
             this.m_reader = new BigEndianReader(filepath);
             this.m_indexes = new Dictionary<int, int>();
-            this.m_gameDataClasses = new Dictionary<int, AbstractGameDataClass>();
+            this.m_gameDataClasses = new Dictionary<int, GameDataClass>();
             this.m_processors = new Dictionary<int, GameDataProcessor>();
-            this.m_classesDefinitions = new Dictionary<int, GameDataClassDefinition>();
+            this.m_classDefinitions = new Dictionary<int, GameDataClassDefinition>();
         }
 
         public void Read()
@@ -42,6 +42,7 @@ namespace DofusRE.d2o
 
         private void readHeader()
         {
+            Console.WriteLine($"Reading header at {m_reader.Position}");
             var headerBytes = this.m_reader.ReadBytes(D2O_HEADER.Length);
             var header = Encoding.ASCII.GetString(headerBytes);
             if (header != D2O_HEADER)
@@ -52,10 +53,12 @@ namespace DofusRE.d2o
 
         private void readIndexes()
         {
+            Console.WriteLine($"Reading indexes at {m_reader.Position}");
             var indexesPointer = this.m_reader.ReadInt();
+            Console.WriteLine($"\tindexes pointer: {indexesPointer}");
             this.m_reader.Seek(indexesPointer, SeekOrigin.Begin);
             var indexesLength = this.m_reader.ReadInt();
-
+            Console.WriteLine($"\tindexes length: {indexesLength}");
             for (int i = 0; i < indexesLength; i += sizeof(int) + sizeof(int))
             {
                 var key = this.m_reader.ReadInt();
@@ -66,32 +69,15 @@ namespace DofusRE.d2o
 
         private void readClassesDefinitions()
         {
+            Console.WriteLine($"Reading classes definitions at {m_reader.Position}");
             var classesCount = this.m_reader.ReadInt();
-
+            Console.WriteLine($"\t classes definitions count: {classesCount}");
             for (int i = 0; i < classesCount; i++)
             {
-                var id = this.m_reader.ReadInt();
-                var name = this.m_reader.ReadUTF();
-                var package = this.m_reader.ReadUTF();
-
-                var classDef = new GameDataClassDefinition(id, name, package);
-                readClassDefinitionFields(classDef);
-                this.m_classesDefinitions.Add(id, classDef);
+                var classDef = new GameDataClassDefinition().Deserialize(this.m_reader);
+                this.m_classDefinitions.Add(classDef.Id, classDef);
             }
         }
-
-        private void readClassDefinitionFields(GameDataClassDefinition classDef)
-        {
-            var fieldsCount = this.m_reader.ReadInt();
-            for (int j = 0; j < fieldsCount; j++)
-            {
-                var fieldName = this.m_reader.ReadUTF();
-                var fieldType = (GameDataFieldType)this.m_reader.ReadInt();
-
-                classDef.AddField(new GameDataField(fieldName, fieldType, this.m_reader, this.m_classesDefinitions));
-            }
-        }
-
         private void readProcessors()
         {
             if (this.m_reader.BytesAvailable <= 0)
@@ -105,27 +91,20 @@ namespace DofusRE.d2o
 
         private void readClasses()
         {
-            int min = -1, max = -1;
-
             foreach (var entry in this.m_indexes)
             {
-                if (min == -1 || max == -1)
-                {
-                    min = entry.Value;
-                    max = entry.Value;
-                }
-                min = min > entry.Value ? entry.Value : min;
-                max = max < entry.Value ? entry.Value : max;
-
                 var key = entry.Key;
                 var position = entry.Value;
+
+                this.m_reader.Seek(position, SeekOrigin.Begin);
+                var classDefId = this.m_reader.ReadInt();
+                var classDef = this.m_classDefinitions[classDefId];
+                var _class = GameDataCenter.GetGameDataClassByName(classDef.Name);
                 this.m_reader.Seek(position, SeekOrigin.Begin);
 
-                var classDefinitionIdentifier = this.m_reader.ReadInt();
-                var classDef = this.m_classesDefinitions[classDefinitionIdentifier];
-                
-                var gameDataClass = classDef.Read();
-                this.m_gameDataClasses.Add(key, gameDataClass);
+                _class.Deserialize(this.m_reader, this.m_classDefinitions);
+
+                this.m_gameDataClasses.Add(key, _class);
             }
         }
     }

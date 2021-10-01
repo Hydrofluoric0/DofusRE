@@ -1,15 +1,13 @@
 
 
-// Generated on 09/25/2021 21:18:16
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
-using DofusRE.IO.d2o.classes.custom;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class Area : AbstractGameDataClass
+    public class Area : GameDataClass
     {
         public const String MODULE = "Areas";
         public int id;

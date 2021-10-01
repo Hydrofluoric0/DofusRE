@@ -1,14 +1,13 @@
 
 
-// Generated on 09/25/2021 21:18:13
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class CharacteristicCategory : AbstractGameDataClass
+    public class CharacteristicCategory : GameDataClass
     {
         public const String MODULE = "CharacteristicCategories";
         public int id;

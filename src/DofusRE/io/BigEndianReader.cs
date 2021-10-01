@@ -76,6 +76,16 @@ namespace DofusRE.io
 
             return buffer;
         }
+        public byte[] SubBuffer(int start, int end)
+        {
+            var length = end - start;
+
+            this.Seek(start, SeekOrigin.Begin);
+            var buffer = ReadBytes(length);
+            this.Seek(end, SeekOrigin.Begin);
+
+            return buffer;
+        }
 
         public double ReadDouble()
         {

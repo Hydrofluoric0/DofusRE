@@ -1,15 +1,13 @@
 
 
-// Generated on 09/25/2021 21:18:15
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
-using DofusRE.IO.d2o.classes.custom;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class QuestObjective : AbstractGameDataClass
+    public class QuestObjective : GameDataClass
     {
         public const String MODULE = "QuestObjectives";
         public uint id;

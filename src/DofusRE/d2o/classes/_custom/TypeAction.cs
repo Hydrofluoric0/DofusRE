@@ -1,10 +1,11 @@
 ﻿using DofusRE.d2o;
+using DofusRE.io;
 using System;
 using System.Collections.Generic;
 
-namespace DofusRE.IO.d2o.classes.custom
+namespace DofusRE.d2o.classes
 {
-    public class TypeAction : AbstractGameDataClass
+    public class TypeAction : GameDataClass
     {
         public static List<TypeAction> TypeActions = new List<TypeAction>();
         public int id;

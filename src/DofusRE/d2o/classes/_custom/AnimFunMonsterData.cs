@@ -1,16 +1,12 @@
 ﻿using DofusRE.d2o;
+using DofusRE.io;
 using System;
 
-namespace DofusRE.IO.d2o.classes.custom
+namespace DofusRE.d2o.classes
 {
-    public class AnimFunMonsterData : AbstractGameDataClass
+    public class AnimFunMonsterData : GameDataClass
     {
         public string animName;
         public int animWeight;
-        public AnimFunMonsterData(String animName, Int32 animWeight)
-        {
-            this.animName = animName;
-            this.animWeight = animWeight;
-        }
     }
 }

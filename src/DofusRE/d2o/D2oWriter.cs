@@ -12,9 +12,11 @@ namespace DofusRE.d2o
 {
     public class D2oWriter
     {
+        private const string D2O_HEADER = "D2O";
+
         private BigEndianWriter m_writer;
         private Dictionary<int, int> m_indexes;
-        private Dictionary<int, AbstractGameDataClass> m_classes;
+        private Dictionary<int, GameDataClass> m_classes;
         private Dictionary<int, GameDataClassDefinition> m_definitions;
 
         public D2oWriter(string output_path, bool create=false)
@@ -23,16 +25,14 @@ namespace DofusRE.d2o
             this.m_indexes = new Dictionary<int, int>();
         }
 
-        public void Write(Dictionary<int, GameDataClassDefinition> definitions, Dictionary<int, AbstractGameDataClass> classes)
+        public void Write(Dictionary<int, GameDataClassDefinition> definitions, Dictionary<int, GameDataClass> classes)
         {
             this.m_definitions = definitions;
             this.m_classes = classes;
 
             writeHeader();
-
             // reserve space for indexes table pointer
             this.m_writer.WriteInt(0);
-
             writeClasses();
             writeIndexes();
             writeClassesDefinitions();
@@ -42,7 +42,7 @@ namespace DofusRE.d2o
 
         private void writeHeader()
         {
-            var header = Encoding.ASCII.GetBytes("D2O");
+            var header = Encoding.ASCII.GetBytes(D2O_HEADER);
             this.m_writer.WriteBytes(header);
         }
 
@@ -53,69 +53,7 @@ namespace DofusRE.d2o
                 var key = entry.Key;
                 var _class = entry.Value;
                 this.m_indexes[key] = (int)this.m_writer.Position;
-                writeClass(_class);
-            }
-        }
-
-        private void writeClass(AbstractGameDataClass _class) {
-            var classFields = _class.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public);
-            var entry = this.m_definitions.First(d => d.Value.Name == _class.GetType().Name);
-            var classDef = entry.Value;
-
-            this.m_writer.WriteInt(classDef.Id);
-            foreach (var fieldDef in classDef.Fields)
-            {
-                var field = classFields.First(f => f.Name == fieldDef.Name);
-                writeField(_class, field);
-            }
-        }
-
-        private void writeField(AbstractGameDataClass _class, FieldInfo field)
-        {
-            dynamic fieldValue = field.GetValue(_class);
-            if (fieldValue == null)
-            {
-                return;
-            }
-            Type fieldType = fieldValue.GetType();
-            writeField(fieldType, fieldValue);
-        }
-
-        private void writeField(Type fieldType, dynamic fieldValue)
-        {
-            if (fieldType == typeof(int))
-                this.m_writer.WriteInt(fieldValue);
-            else if (fieldType == typeof(string))
-                this.m_writer.WriteUTF(fieldValue);
-            else if (fieldType == typeof(double))
-                this.m_writer.WriteDouble(fieldValue);
-            else if (fieldType == typeof(uint))
-                this.m_writer.WriteUInt(fieldValue);
-            else if (fieldType == typeof(bool))
-                this.m_writer.WriteBoolean(fieldValue);
-            else if (fieldType == typeof(List<>))
-                writeListField(fieldType, (List<object>)fieldValue);
-            else if (fieldType == typeof(AbstractGameDataClass))
-                writeClass(fieldValue);
-        }
-
-        private void writeListField(Type type, List<object> list)
-        {
-            var innerType = type.GetGenericArguments()[0];
-            this.m_writer.WriteInt(list.Count);
-            if (typeof(IList).IsAssignableFrom(innerType))
-            {
-                foreach (List<object> subList in list)
-                {
-                    writeListField(innerType, subList);
-                }
-            }
-            else
-            {
-                foreach (var element in list)
-                {
-                    writeField(innerType, element);
-                }
+                _class.Serialize(this.m_writer, this.m_definitions);
             }
         }
 
@@ -129,11 +67,11 @@ namespace DofusRE.d2o
             this.m_writer.WriteInt((int)pos);
             this.m_writer.Seek((int)pos, SeekOrigin.Begin);
 
-            var lengthPosition = this.m_writer.Position;
+            var lengthPosition = (int)this.m_writer.Position;
             // reserve space for table length
             this.m_writer.WriteInt(0);
 
-            var beginPosition = this.m_writer.Position;
+            var beginPosition = (int)this.m_writer.Position;
             foreach (var entry in this.m_indexes)
             {
                 if (min == -1 || max == -1)
@@ -147,41 +85,22 @@ namespace DofusRE.d2o
                 this.m_writer.WriteInt(entry.Key);
                 this.m_writer.WriteInt(entry.Value);
             }
-            var endPosition = this.m_writer.Position;
-            var length = (int)(endPosition - beginPosition);
+            var endPosition = (int)this.m_writer.Position;
+            var length = endPosition - beginPosition;
 
-            this.m_writer.Seek((int)lengthPosition, SeekOrigin.Begin);
+            this.m_writer.Seek(lengthPosition, SeekOrigin.Begin);
             this.m_writer.WriteInt(length);
-            this.m_writer.Seek((int)endPosition, SeekOrigin.Begin);
+            this.m_writer.Seek(endPosition, SeekOrigin.Begin);
         }
 
         private void writeClassesDefinitions()
         {
+            this.m_writer.WriteInt(this.m_definitions.Count);
+
             foreach (var entry in m_definitions)
             {
                 var classDef = entry.Value;
-                this.m_writer.WriteInt(classDef.Id);
-                this.m_writer.WriteUTF(classDef.Name);
-                this.m_writer.WriteUTF(classDef.Package);
-                this.m_writer.WriteInt(classDef.Fields.Count);
-                foreach (var field in classDef.Fields)
-                {
-                    writeClassDefinitionField(field);
-                }
-            }
-        }
-
-        private void writeClassDefinitionField(GameDataField field)
-        {
-            this.m_writer.WriteUTF(field.Name);
-            this.m_writer.WriteInt((int)field.Type);
-            if (field.Type == GameDataFieldType.VECTOR)
-            {
-                for (int i = 0; i < field.InnerTypes.Count; i++)
-                {
-                    this.m_writer.WriteUTF(field.InnerTypeNames[i]);
-                    this.m_writer.WriteInt((int)field.InnerTypes[i]);
-                }
+                classDef.Serialize(this.m_writer);
             }
         }
     }

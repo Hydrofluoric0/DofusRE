@@ -9,6 +9,14 @@ namespace DofusRE.d2o
     static class GameDataCenter
     {
         private static Dictionary<string, Type> m_classes;
+        private static Dictionary<GameDataFieldType, string> m_typesIds = new Dictionary<GameDataFieldType, string>{
+            {GameDataFieldType.INT, typeof(int).FullName },
+            {GameDataFieldType.BOOL, typeof(bool).FullName },
+            {GameDataFieldType.UINT, typeof(uint).FullName },
+            {GameDataFieldType.I18N, typeof(int).FullName },
+            {GameDataFieldType.STRING, typeof(string).FullName },
+            {GameDataFieldType.VECTOR, typeof(List<>).FullName }
+        };
 
         private static void initGameDataClasses()
         {
@@ -16,7 +24,7 @@ namespace DofusRE.d2o
 
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
-                var interfaceType = typeof(AbstractGameDataClass);
+                var interfaceType = typeof(GameDataClass);
                 var types = asm.GetTypes().Where(t => interfaceType.IsAssignableFrom(t) && t.FullName != interfaceType.FullName).ToList();
                 foreach (var type in types)
                 {
@@ -33,13 +41,19 @@ namespace DofusRE.d2o
             }
         }
 
-        public static Type GetGameDataClassByName(string name)
+        public static string ConvertAS3Type(GameDataFieldType type)
+        {
+            return m_typesIds[type];
+        }
+
+        public static GameDataClass GetGameDataClassByName(string name)
         {
             if (m_classes == null)
             {
                 initGameDataClasses();
             }
-            return m_classes[name];
+            var classType = m_classes[name];
+            return (GameDataClass)Activator.CreateInstance(classType);
         }
     }
 }

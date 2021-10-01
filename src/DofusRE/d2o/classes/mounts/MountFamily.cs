@@ -1,16 +1,15 @@
 
 
-// Generated on 09/25/2021 21:18:15
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class MountFamily : AbstractGameDataClass
+    public class MountFamily : GameDataClass
     {
-        private String MODULE = "MountFamily";
+        private const String MODULE = "MountFamily";
         public uint id;
         public uint nameId;
         public String headUri;

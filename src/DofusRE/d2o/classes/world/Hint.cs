@@ -1,14 +1,13 @@
 
 
-// Generated on 09/25/2021 21:18:16
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class Hint : AbstractGameDataClass
+    public class Hint : GameDataClass
     {
         public const String MODULE = "Hints";
         public int id;

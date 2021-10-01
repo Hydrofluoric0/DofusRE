@@ -1,14 +1,13 @@
 
 
-// Generated on 09/25/2021 21:18:13
 using System;
 using System.Collections.Generic;
-using DofusRE.d2o;
+using DofusRE.io;
+using DofusRE.d2o.classes;
 
 namespace DofusRE.d2o.classes
 {
-    
-    public class EffectInstance : AbstractGameDataClass
+    public class EffectInstance : GameDataClass
     {
         public const int IS_DISPELLABLE = 1;
         public const int IS_DISPELLABLE_ONLY_BY_DEATH = 2;
@@ -30,12 +29,12 @@ namespace DofusRE.d2o.classes
         public Boolean visibleInFightLog = true;
         public Boolean forClientOnly = false;
         public int dispellable = 1;
-        public Object zoneSize;
+        public int zoneSize;
         public uint zoneShape;
-        public Object zoneMinSize;
-        public Object zoneEfficiencyPercent;
-        public Object zoneMaxEfficiency;
-        public Object zoneStopAtTarget;
+        public int zoneMinSize;
+        public int zoneEfficiencyPercent;
+        public int zoneMaxEfficiency;
+        public int zoneStopAtTarget;
         public int effectElement;
         public int spellId;
         public String rawZone;

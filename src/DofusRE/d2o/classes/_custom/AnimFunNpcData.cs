@@ -1,15 +1,11 @@
 ﻿using DofusRE.d2o;
+using DofusRE.io;
 
-namespace DofusRE.IO.d2o.classes.custom
+namespace DofusRE.d2o.classes
 {
-    public class AnimFunNpcData : AbstractGameDataClass
+    public class AnimFunNpcData : GameDataClass
     {
         public string animName;
         public int animWeight;
-        public AnimFunNpcData(string animName, int animWeight)
-        {
-            this.animName = animName;
-            this.animWeight = animWeight;
-        }
     }
 }
