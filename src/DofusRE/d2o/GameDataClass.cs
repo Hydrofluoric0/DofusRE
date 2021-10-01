@@ -16,10 +16,6 @@ namespace DofusRE.d2o
         {
             if (typeof(IList).IsAssignableFrom(type))
             {
-                if (reader.Position < 120)
-                {
-                    Console.WriteLine($"reading a list at {reader.Position}");
-                }
                 var instance = (IList)Activator.CreateInstance(type);
                 var innerType = type.GetGenericArguments().Single();
                 var listLength = reader.ReadInt();
@@ -31,10 +27,6 @@ namespace DofusRE.d2o
             }
             else if (type.IsSubclassOf(typeof(GameDataClass)))
             {
-                if (reader.Position < 120)
-                {
-                    Console.WriteLine($"reading an object at {reader.Position}");
-                }
                 var position = (int)reader.Position;
                 var classDefId = reader.ReadInt();
                 reader.Seek(position, SeekOrigin.Begin);
@@ -46,11 +38,6 @@ namespace DofusRE.d2o
             }
             else
             {
-                if (reader.Position < 120)
-                {
-                    Console.WriteLine($"reading a built-in type ({type.Name}) at {reader.Position}");
-                }
-
                 if (type == typeof(int))
                     return reader.ReadInt();
                 if (type == typeof(bool))
@@ -73,11 +60,6 @@ namespace DofusRE.d2o
 
         public GameDataClass Deserialize(BigEndianReader reader, Dictionary<int, GameDataClassDefinition> classesDefs)
         {
-            if (reader.Position < 120)
-            {
-                Console.WriteLine($"reading a field at {reader.Position}");
-            }
-
             this.DefinitionId = reader.ReadInt();
             var classDef = classesDefs[this.DefinitionId];
 
@@ -112,10 +94,6 @@ namespace DofusRE.d2o
         {
             if (typeof(IList).IsAssignableFrom(type))
             {
-                if (writer.Position < 120)
-                {
-                    Console.WriteLine($"writing a list at {writer.Position}");
-                }
                 var list = (IList)value;
                 var innerType = type.GetGenericArguments().Single();
 
@@ -127,20 +105,11 @@ namespace DofusRE.d2o
             }
             else if (type.IsSubclassOf(typeof(GameDataClass)))
             {
-                if (writer.Position < 120)
-                {
-                    Console.WriteLine($"writing an object at {writer.Position}");
-                }
                 var _class = (GameDataClass)value;
                 _class.Serialize(writer, definitions);
             }
             else
             {
-                if (writer.Position < 120)
-                {
-                    Console.WriteLine($"writing a built-in type ({type.Name}) at {writer.Position}");
-                }
-
                 if (type == typeof(int))
                     writer.WriteInt((int)value);
                 else if (type == typeof(bool))

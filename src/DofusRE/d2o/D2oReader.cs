@@ -42,7 +42,6 @@ namespace DofusRE.d2o
 
         private void readHeader()
         {
-            Console.WriteLine($"Reading header at {m_reader.Position}");
             var headerBytes = this.m_reader.ReadBytes(D2O_HEADER.Length);
             var header = Encoding.ASCII.GetString(headerBytes);
             if (header != D2O_HEADER)
@@ -53,12 +52,9 @@ namespace DofusRE.d2o
 
         private void readIndexes()
         {
-            Console.WriteLine($"Reading indexes at {m_reader.Position}");
             var indexesPointer = this.m_reader.ReadInt();
-            Console.WriteLine($"\tindexes pointer: {indexesPointer}");
             this.m_reader.Seek(indexesPointer, SeekOrigin.Begin);
             var indexesLength = this.m_reader.ReadInt();
-            Console.WriteLine($"\tindexes length: {indexesLength}");
             for (int i = 0; i < indexesLength; i += sizeof(int) + sizeof(int))
             {
                 var key = this.m_reader.ReadInt();
@@ -69,9 +65,7 @@ namespace DofusRE.d2o
 
         private void readClassesDefinitions()
         {
-            Console.WriteLine($"Reading classes definitions at {m_reader.Position}");
             var classesCount = this.m_reader.ReadInt();
-            Console.WriteLine($"\t classes definitions count: {classesCount}");
             for (int i = 0; i < classesCount; i++)
             {
                 var classDef = new GameDataClassDefinition().Deserialize(this.m_reader);

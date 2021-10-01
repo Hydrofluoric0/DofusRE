@@ -14,7 +14,6 @@ namespace DofusRE.d2o
         public int Id;
         public string Name;
         public string Package;
-        // switch to GameDataClass ?
         public Type GameDataClassType;
         public List<GameDataField> Fields;
         public byte[] RawBuffer;
@@ -27,18 +26,13 @@ namespace DofusRE.d2o
         public GameDataClassDefinition Deserialize(BigEndianReader reader)
         {
             GameDataClassDefinition classDef = new GameDataClassDefinition();
-            Console.WriteLine($"Deserializing a class definition at {reader.Position}");
             var beginPosition = (int)reader.Position;
 
             classDef.Id = reader.ReadInt();
             classDef.Name = reader.ReadUTF();
             classDef.Package = reader.ReadUTF();
-            Console.WriteLine($"\tid={classDef.Id}");
-            Console.WriteLine($"\tName={classDef.Name}");
-            Console.WriteLine($"\tPackage={classDef.Package}");
 
             var fieldsCount = reader.ReadInt();
-            Console.WriteLine($"\tFields count={fieldsCount}");
             for (int i = 0; i < fieldsCount; i++)
             {
                 var field = new GameDataField().Deserialize(reader);
