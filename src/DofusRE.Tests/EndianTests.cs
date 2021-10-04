@@ -16,8 +16,9 @@ namespace DofusRE.Tests
             const string MAGIC = "ANKAMA";
 
             var filepath = Path.Combine(TmpDirectory, "2.out");
-            var writer = new BigEndianWriter(filepath, true);
+            File.Create(filepath).Close();
 
+            var writer = new BigEndianWriter(filepath);
             writer.WriteBoolean(true);
             writer.WriteByte(Byte.MaxValue);
             writer.WriteDouble(Double.MaxValue);

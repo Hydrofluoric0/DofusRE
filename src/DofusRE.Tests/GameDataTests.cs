@@ -9,18 +9,19 @@ using Xunit;
 
 namespace DofusRE.Tests
 {
-    public class D2oTests
+    public class GameDataTests
     {
         [Fact]
-        public void D2o_Tests()
+        public void GameData_Tests()
         {
             var uuid = Guid.NewGuid();
             var output = Path.Combine(Path.GetTempPath(), $"output-{uuid}.d2o");
+            File.Create(output).Close();
 
             var refReader = new D2oReader(@"./assets/items.d2o");
             refReader.Read();
 
-            var writer = new D2oWriter(output, true);
+            var writer = new D2oWriter(output);
             writer.Write(refReader.ClassesDefinitions, refReader.Classes);
 
             var reader = new D2oReader(output);

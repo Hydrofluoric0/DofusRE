@@ -6,7 +6,7 @@ using System.Text;
 
 namespace DofusRE.d2i
 {
-    public class D2iReader : IDisposable
+    public class I18nReader : IDisposable
     {
         private BigEndianReader m_reader;
         private Dictionary<int, int> m_textIndexes;
@@ -14,16 +14,16 @@ namespace DofusRE.d2i
         private Dictionary<string, int> m_namedTextIndexes;
         private Dictionary<int, int> m_undiacriticalTextIndexes;
 
-        private Dictionary<int, D2iText> m_texts;
-        private Dictionary<string, D2iNamedText> m_namedTexts;
+        private Dictionary<int, I18nIndexedText> m_texts;
+        private Dictionary<string, I18nNamedText> m_namedTexts;
 
-        public Dictionary<int, D2iText> Texts => m_texts;
-        public Dictionary<string, D2iNamedText> NamedTexts => m_namedTexts;
+        public Dictionary<int, I18nIndexedText> Texts => m_texts;
+        public Dictionary<string, I18nNamedText> NamedTexts => m_namedTexts;
 
-        public D2iReader(string filepath)
+        public I18nReader(string filepath)
         {
-            this.m_texts = new Dictionary<int, D2iText>();
-            this.m_namedTexts = new Dictionary<string, D2iNamedText>();
+            this.m_texts = new Dictionary<int, I18nIndexedText>();
+            this.m_namedTexts = new Dictionary<string, I18nNamedText>();
 
             this.m_textIndexes = new Dictionary<int, int>();
             this.m_namedTextIndexes = new Dictionary<string, int>();
@@ -114,11 +114,11 @@ namespace DofusRE.d2i
                     m_reader.Seek(undiacPointer, SeekOrigin.Begin);
                     var undiacText = m_reader.ReadUTF();
 
-                    this.m_texts.Add(key, new D2iText(key, text, isDiac, undiacText));
+                    this.m_texts.Add(key, new I18nIndexedText(key, text, isDiac, undiacText));
                 }
                 else
                 {
-                    this.m_texts.Add(key, new D2iText(key, text, isDiac));
+                    this.m_texts.Add(key, new I18nIndexedText(key, text, isDiac));
                 }
             }
         }
@@ -133,7 +133,7 @@ namespace DofusRE.d2i
                 this.m_reader.Seek(pointer, SeekOrigin.Begin);
                 var text = this.m_reader.ReadUTF();
 
-                this.m_namedTexts.Add(key, new D2iNamedText(key, text));
+                this.m_namedTexts.Add(key, new I18nNamedText(key, text));
             }
         }
 

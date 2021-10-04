@@ -6,24 +6,25 @@ using Xunit;
 
 namespace DofusRE.Tests
 {
-    public class D2iTests
+    public class I18nTests
     {
         [Fact]
-        public void D2i_Tests()
+        public void I18n_Tests()
         {
             var uuid = Guid.NewGuid();
             var output = Path.Combine(Path.GetTempPath(), $"output-{uuid}.d2i");
+            File.Create(output).Close();
 
             // reference reader
-            var refReader = new D2iReader(@"./assets/i18n_fr.d2i");
+            var refReader = new I18nReader(@"./assets/i18n_fr.d2i");
             refReader.Read();
             refReader.Dispose();
 
-            var writer = new D2iWriter(output, true);
+            var writer = new I18nWriter(output);
             writer.Write(refReader.Texts.Values.ToList(), refReader.NamedTexts.Values.ToList());
             writer.Dispose();
 
-            var testReader = new D2iReader(output);
+            var testReader = new I18nReader(output);
             testReader.Read();
             testReader.Dispose();
 

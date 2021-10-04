@@ -12,9 +12,9 @@ namespace DofusRE.io
     {
         private Stream m_stream;
 
-        public BigEndianWriter(string filepath, bool create = false)
+        public BigEndianWriter(string filepath)
         {
-            this.m_stream = initFromFile(filepath, create);
+            this.m_stream = initFromFile(filepath);
         }
 
         public BigEndianWriter(Stream stream)
@@ -27,10 +27,9 @@ namespace DofusRE.io
         public long BytesAvailable => m_stream.Length - m_stream.Position;
 
 
-        private FileStream initFromFile(string path, bool create)
+        private FileStream initFromFile(string path)
         {
-            var fileMode = create ? FileMode.OpenOrCreate : FileMode.Open;
-            var fileStream = new FileStream(path, fileMode, FileAccess.Write);
+            var fileStream = new FileStream(path, FileMode.Open, FileAccess.Write);
             return fileStream;
         }
 

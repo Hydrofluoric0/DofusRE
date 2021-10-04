@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>DofusRE</id>
+    <version>1.0</version>
+    <title>DofusRE</title>
+    <authors>Hydrofluoric</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>http://project_url_here_or_delete_this_line/</projectUrl>
+    <iconUrl>http://icon_url_here_or_delete_this_line/</iconUrl>
+    <description>Reverse-engineering library for Dofus 2.0</description>
+    <releaseNotes>Initial release: i18n (.d2i files) and game date (.d2o files) can be read and wrote</releaseNotes>
+    <copyright>Ankama4ever</copyright>
+    <tags>Dofus</tags>
+  </metadata>
+</package>

@@ -19,9 +19,9 @@ namespace DofusRE.d2o
         private Dictionary<int, GameDataClass> m_classes;
         private Dictionary<int, GameDataClassDefinition> m_definitions;
 
-        public D2oWriter(string output_path, bool create=false)
+        public D2oWriter(string output_path)
         {
-            this.m_writer = new BigEndianWriter(output_path, create);
+            this.m_writer = new BigEndianWriter(output_path);
             this.m_indexes = new Dictionary<int, int>();
         }
 

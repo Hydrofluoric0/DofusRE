@@ -8,24 +8,24 @@ using System.Threading.Tasks;
 
 namespace DofusRE.d2i
 {
-    public class D2iWriter
+    public class I18nWriter
     {
         private BigEndianWriter m_writer;
-        private List<D2iText> m_texts;
-        private List<D2iNamedText> m_namedTexts;
+        private List<I18nIndexedText> m_texts;
+        private List<I18nNamedText> m_namedTexts;
         private Dictionary<int, int> m_textIndexes;
         private Dictionary<string, int> m_namedTextIndexes;
         private Dictionary<int, int> m_undiacriticalTextIndexes;
 
-        public D2iWriter(string output_path, bool create=false)
+        public I18nWriter(string path)
         {
-            this.m_writer = new BigEndianWriter(output_path, create);
+            this.m_writer = new BigEndianWriter(path);
             this.m_textIndexes = new Dictionary<int, int>();
             this.m_namedTextIndexes = new Dictionary<string, int>();
             this.m_undiacriticalTextIndexes = new Dictionary<int, int>();
         }
         
-        public void Write(List<D2iText> texts, List<D2iNamedText> named_texts)
+        public void Write(List<I18nIndexedText> texts, List<I18nNamedText> named_texts)
         {
             this.m_texts = texts;
             this.m_namedTexts = named_texts;
@@ -76,10 +76,10 @@ namespace DofusRE.d2i
                 var pointer = this.m_textIndexes[entry.Key];
 
                 this.m_writer.WriteInt(entry.Key);
-                this.m_writer.WriteBoolean(entry.isDiacritical);
+                this.m_writer.WriteBoolean(entry.IsDiacritical);
                 this.m_writer.WriteInt(pointer);
 
-                if (entry.isDiacritical)
+                if (entry.IsDiacritical)
                 {
                     var undiacPointer = this.m_undiacriticalTextIndexes[entry.Key];
                     this.m_writer.WriteInt(undiacPointer);
@@ -110,7 +110,7 @@ namespace DofusRE.d2i
             {
                 this.m_textIndexes[entry.Key] = (int)this.m_writer.Position;
                 this.m_writer.WriteUTF(entry.Text);
-                if (entry.isDiacritical)
+                if (entry.IsDiacritical)
                 {
                     this.m_undiacriticalTextIndexes[entry.Key] = (int)this.m_writer.Position;
                     this.m_writer.WriteUTF(entry.UndiacriticalText);

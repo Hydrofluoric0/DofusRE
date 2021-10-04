@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <Authors>Hydrofluoric</Authors>
+    <Company>None</Company>
+    <Description>Reverse-engineering library for Dofus 2.0</Description>
+    <Copyright>None</Copyright>
+    <PackageProjectUrl>https://github.com/Hydrofluoric0/DofusRE</PackageProjectUrl>
   </PropertyGroup>
 
 </Project>
