@@ -3,7 +3,7 @@ using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 
-namespace DofusRE.io
+namespace DofusRE.IO
 {
     public class BigEndianReader : IDisposable
     {

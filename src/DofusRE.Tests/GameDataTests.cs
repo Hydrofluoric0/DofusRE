@@ -1,4 +1,4 @@
-﻿using DofusRE.d2o;
+﻿using DofusRE.GameData;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,13 +18,13 @@ namespace DofusRE.Tests
             var output = Path.Combine(Path.GetTempPath(), $"output-{uuid}.d2o");
             File.Create(output).Close();
 
-            var refReader = new D2oReader(@"./assets/items.d2o");
+            var refReader = new GameDataReader(@"./assets/items.d2o");
             refReader.Read();
 
-            var writer = new D2oWriter(output);
+            var writer = new GameDataWriter(output);
             writer.Write(refReader.ClassesDefinitions, refReader.Classes);
 
-            var reader = new D2oReader(output);
+            var reader = new GameDataReader(output);
             reader.Read();
 
             Assert.True(reader.Classes.Count == refReader.Classes.Count);

@@ -1,4 +1,4 @@
-﻿using DofusRE.d2i;
+﻿using DofusRE.I18n;
 using System;
 using System.IO;
 using System.Linq;

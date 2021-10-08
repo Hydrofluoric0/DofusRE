@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DofusRE.io
+namespace DofusRE.IO
 {
     public class BigEndianWriter : IDisposable
     {

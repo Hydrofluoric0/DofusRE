@@ -1,5 +1,5 @@
-using DofusRE.d2i;
-using DofusRE.io;
+using DofusRE.I18n;
+using DofusRE.IO;
 using Xunit;
 using System;
 using System.IO;
