@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DofusRE.I18n
 {
-    public class I18nWriter
+    public class I18nWriter : IDisposable
     {
         private BigEndianWriter m_writer;
         private List<I18nIndexedText> m_texts;
@@ -47,6 +47,8 @@ namespace DofusRE.I18n
             writeTextIndexesTable();
             writeNamedTextIndexesTable();
             writeSortedTextIndexesTable();
+
+            Dispose();
         }
         private void writeIndexesTableWrapper(Action func)
         {

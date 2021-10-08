@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace DofusRE.GameData
 {
-    public class GameDataWriter
+    public class GameDataWriter : IDisposable
     {
         private const string D2O_HEADER = "D2O";
 
@@ -37,7 +37,7 @@ namespace DofusRE.GameData
             writeIndexes();
             writeClassesDefinitions();
 
-            this.m_writer.Dispose();
+            Dispose();
         }
 
         private void writeHeader()
@@ -92,6 +92,11 @@ namespace DofusRE.GameData
                 var classDef = entry.Value;
                 classDef.Serialize(this.m_writer);
             }
+        }
+
+        public void Dispose()
+        {
+            this.m_writer.Dispose();
         }
     }
 }

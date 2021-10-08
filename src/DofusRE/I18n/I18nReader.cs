@@ -40,6 +40,8 @@ namespace DofusRE.I18n
             readSortedTextIndexes();
             readTexts();
             readNamedTexts();
+
+            Dispose();
         }
 
         private void readTextIndexes()

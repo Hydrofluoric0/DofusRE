@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DofusRE.GameData
 {
-    public class GameDataReader
+    public class GameDataReader : IDisposable
     {
         private const string D2O_HEADER = "D2O";
 
@@ -38,6 +38,8 @@ namespace DofusRE.GameData
             readClassesDefinitions();
             readProcessors();
             readClasses();
+
+            Dispose();
         }
 
         private void readHeader()
@@ -100,6 +102,11 @@ namespace DofusRE.GameData
 
                 this.m_gameDataClasses.Add(key, _class);
             }
+        }
+
+        public void Dispose()
+        {
+            this.m_reader.Dispose();
         }
     }
 }
