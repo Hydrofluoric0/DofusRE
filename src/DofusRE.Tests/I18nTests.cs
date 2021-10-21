@@ -21,19 +21,19 @@ namespace DofusRE.Tests
             refReader.Dispose();
 
             var writer = new I18nWriter(output);
-            writer.Write(refReader.Texts.Values.ToList(), refReader.NamedTexts.Values.ToList());
+            writer.Write(refReader.IndexedTexts.Values.ToList(), refReader.NamedTexts.Values.ToList());
             writer.Dispose();
 
             var testReader = new I18nReader(output);
             testReader.Read();
             testReader.Dispose();
 
-            Assert.True(refReader.Texts.Count == testReader.Texts.Count);
+            Assert.True(refReader.IndexedTexts.Count == testReader.IndexedTexts.Count);
             Assert.True(refReader.NamedTexts.Count == testReader.NamedTexts.Count);
 
-            var refList = refReader.Texts.ToDictionary(x => x.Key);
-            var testList = testReader.Texts.ToDictionary(x => x.Key);
-            foreach (var entry in refReader.Texts)
+            var refList = refReader.IndexedTexts.ToDictionary(x => x.Key);
+            var testList = testReader.IndexedTexts.ToDictionary(x => x.Key);
+            foreach (var entry in refReader.IndexedTexts)
             {
                 var refText = entry.Value;
                 var testText = testList[refText.Key].Value;

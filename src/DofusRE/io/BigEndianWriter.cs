@@ -17,12 +17,6 @@ namespace DofusRE.IO
             this.m_stream = initFromFile(filepath);
         }
 
-        public BigEndianWriter(Stream stream)
-        {
-            this.m_stream = stream;
-        }
-
-
         public long Position => m_stream.Position;
         public long BytesAvailable => m_stream.Length - m_stream.Position;
 
