@@ -9,21 +9,6 @@ namespace DofusRE.IO
     {
         private Stream m_stream;
 
-        public BigEndianReader(Stream stream)
-        {
-            if (stream is MemoryStream)
-            {
-                this.m_stream = stream;
-            }
-            else
-            {
-                this.m_stream = new MemoryStream();
-                stream.CopyTo(this.m_stream);
-            }
-
-            this.m_stream.Seek(0, SeekOrigin.Begin);
-        }
-
         public BigEndianReader(string filepath)
         {
             this.m_stream = initFromFile(filepath);

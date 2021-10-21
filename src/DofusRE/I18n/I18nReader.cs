@@ -14,15 +14,15 @@ namespace DofusRE.I18n
         private Dictionary<string, int> m_namedTextIndexes;
         private Dictionary<int, int> m_undiacriticalTextIndexes;
 
-        private Dictionary<int, I18nIndexedText> m_texts;
+        private Dictionary<int, I18nIndexedText> m_indexedTexts;
         private Dictionary<string, I18nNamedText> m_namedTexts;
 
-        public Dictionary<int, I18nIndexedText> Texts => m_texts;
+        public Dictionary<int, I18nIndexedText> IndexedTexts => m_indexedTexts;
         public Dictionary<string, I18nNamedText> NamedTexts => m_namedTexts;
 
         public I18nReader(string filepath)
         {
-            this.m_texts = new Dictionary<int, I18nIndexedText>();
+            this.m_indexedTexts = new Dictionary<int, I18nIndexedText>();
             this.m_namedTexts = new Dictionary<string, I18nNamedText>();
 
             this.m_textIndexes = new Dictionary<int, int>();
@@ -116,11 +116,11 @@ namespace DofusRE.I18n
                     m_reader.Seek(undiacPointer, SeekOrigin.Begin);
                     var undiacText = m_reader.ReadUTF();
 
-                    this.m_texts.Add(key, new I18nIndexedText(key, text, isDiac, undiacText));
+                    this.m_indexedTexts.Add(key, new I18nIndexedText(key, text, isDiac, undiacText));
                 }
                 else
                 {
-                    this.m_texts.Add(key, new I18nIndexedText(key, text, isDiac));
+                    this.m_indexedTexts.Add(key, new I18nIndexedText(key, text, isDiac));
                 }
             }
         }
