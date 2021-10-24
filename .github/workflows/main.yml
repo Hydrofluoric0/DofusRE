@@ -28,7 +28,9 @@ jobs:
       - name: Restore
         run: dotnet restore
       - name: Build
-        run: dotnet build -c Release --no-restore
+        run: |
+          dotnet build -c Debug --no-restore
+          dotnet build -c Release --no-restore
       - name: Test
         run: dotnet test -c Debug
       - name: Pack
