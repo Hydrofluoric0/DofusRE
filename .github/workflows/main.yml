@@ -12,7 +12,7 @@ env:
   PROJECT_NAME: DofusRE
   NUGET_FEED: https://api.nuget.org/v3/index.json
   NUGET_KEY: ${{ secrets.NUGET_KEY }}
-jobs:
+jobs: 
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -28,16 +28,9 @@ jobs:
       - name: Restore
         run: dotnet restore
       - name: Build
-        run: |
-          dotnet build -c Debug --no-restore
-          dotnet build -c Release --no-restore
-          cp -r src/DofusRE.Tests/assets/ src/DofusRE.Tests/bin/Debug/net5.0/
-          cp -r src/DofusRE.Tests/assets/ src/DofusRE.Tests/bin/Release/net5.0/
+        run: dotnet build -c Release --no-restore
       - name: Test
-        run: |
-          pwd
-          tree src/DofusRE.Tests
-          dotnet test -c Debug
+        run: dotnet test -c Debug
       - name: Pack
         if: matrix.os == 'ubuntu-latest'
         run: dotnet pack -v normal -c Release --no-restore --include-symbols --include-source -p:PackageVersion=$GITHUB_RUN_ID src/$PROJECT_NAME/$PROJECT_NAME.*proj
