@@ -35,6 +35,7 @@ jobs:
           cp -r src/DofusRE.Tests/assets/ src/DofusRE.Tests/bin/Release/net5.0/
       - name: Test
         run: |
+          pwd
           tree src/DofusRE.Tests
           dotnet test -c Debug
       - name: Pack
