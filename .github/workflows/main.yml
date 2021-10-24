@@ -31,8 +31,8 @@ jobs:
         run: |
           dotnet build -c Debug --no-restore
           dotnet build -c Release --no-restore
-          cp -r src/DofusRE.Tests/assets/ src/DofusRE/bin/Debug/net5.0/
-          cp -r src/DofusRE.Tests/assets/ src/DofusRE/bin/Release/net5.0/
+          cp -r src/DofusRE.Tests/assets/ src/DofusRE.Tests/bin/Debug/net5.0/
+          cp -r src/DofusRE.Tests/assets/ src/DofusRE.Tests/bin/Release/net5.0/
       - name: Test
         run: dotnet test -c Debug
       - name: Pack
