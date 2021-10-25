@@ -5,132 +5,122 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic.CompilerServices;
 
 namespace DofusRE.I18n
 {
-    public class I18nWriter : IDisposable
+    public static class I18nWriter
     {
-        private BigEndianWriter m_writer;
-        private List<I18nIndexedText> m_texts;
-        private List<I18nNamedText> m_namedTexts;
-        private Dictionary<int, int> m_textIndexes;
-        private Dictionary<string, int> m_namedTextIndexes;
-        private Dictionary<int, int> m_undiacriticalTextIndexes;
-
-        public I18nWriter(string path)
+        public static void Write(string path, List<I18nText> texts)
         {
-            this.m_writer = new BigEndianWriter(path);
-            this.m_textIndexes = new Dictionary<int, int>();
-            this.m_namedTextIndexes = new Dictionary<string, int>();
-            this.m_undiacriticalTextIndexes = new Dictionary<int, int>();
-        }
-        
-        public void Write(List<I18nIndexedText> texts, List<I18nNamedText> named_texts)
-        {
-            this.m_texts = texts;
-            this.m_namedTexts = named_texts;
+            using var writer = new BigEndianWriter(path);
+            var indexedTexts = texts.FindAll(text => text is I18nIndexedText).Cast<I18nIndexedText>().ToList();
+            var namedTexts = texts.FindAll(text => text is I18nNamedText).Cast<I18nNamedText>().ToList();
 
             // reserve space for text indexes pointer
-            this.m_writer.WriteInt(0);
+            writer.WriteInt(0);
 
-            // write texts (both named & unnamed) first
-            writeTexts();
-            writeNamedTexts();
+            // write texts (both named & unnamed) first and get their indexes
+            var (indexedTextsIndexes, undiacriticalIndexes) = writeIndexedTexts(writer, indexedTexts);
+            var namedTextsIndexes = writeNamedTexts(writer, namedTexts);
 
             // write text indexes table pointer at reserved space
-            var position = (int)this.m_writer.Position;
-            this.m_writer.Seek(0, SeekOrigin.Begin);
-            this.m_writer.WriteInt(position);
-            this.m_writer.Seek(position, SeekOrigin.Begin);
+            var position = (int)writer.Position;
+            writer.Seek(0, SeekOrigin.Begin);
+            writer.WriteInt(position);
+            writer.Seek(position, SeekOrigin.Begin);
 
-            // finally, writte indexes tables
-            writeTextIndexesTable();
-            writeNamedTextIndexesTable();
-            writeSortedTextIndexesTable();
-
-            Dispose();
+            // finally, write indexes tables
+            tableWrapper(writer, () => writeIndexedTextsTable(writer, indexedTextsIndexes, undiacriticalIndexes, indexedTexts));
+            tableWrapper(writer, () => writeNamedTextsTable(writer, namedTextsIndexes, namedTexts));
+            tableWrapper(writer, () => writeSortedIndexedTextsTable(writer, indexedTexts));
         }
-        private void writeIndexesTableWrapper(Action func)
+        
+        // used to write the indexes table's length
+        private static void tableWrapper(BigEndianWriter writer, Action func)
         {
-            var lengthPosition = (int)this.m_writer.Position;
+            var lengthPosition = (int)writer.Position;
 
             // reserve space for table length;
-            this.m_writer.WriteInt(0);
+            writer.WriteInt(0);
 
             // let the writing function do it's stuff
-            var startPosition = (int)this.m_writer.Position;
+            var startPosition = (int)writer.Position;
             func();
-            var endPosition = (int)this.m_writer.Position;
+            var endPosition = (int)writer.Position;
 
             // writes table length in reserved space
             var length = endPosition - startPosition;
-            this.m_writer.Seek(lengthPosition, SeekOrigin.Begin);
-            this.m_writer.WriteInt(length);
-            this.m_writer.Seek(endPosition, SeekOrigin.Begin);
+            writer.Seek(lengthPosition, SeekOrigin.Begin);
+            writer.WriteInt(length);
+            writer.Seek(endPosition, SeekOrigin.Begin);
         }
-        private void writeTextIndexesTable() => writeIndexesTableWrapper(writeTextIndexes);
-        private void writeNamedTextIndexesTable() => writeIndexesTableWrapper(writeNamedTextIndexes);
-        private void writeSortedTextIndexesTable() => writeIndexesTableWrapper(writeSortedTextIndexes);
-        private void writeTextIndexes()
+        
+        private static Tuple<Dictionary<int, int>, Dictionary<int, int>> writeIndexedTexts(BigEndianWriter writer, List<I18nIndexedText> texts)
         {
-            foreach (var entry in m_texts)
+            Dictionary<int, int> indexedTextsIndexes = new(texts.Count);
+            Dictionary<int, int> undiacriticalIndexes = new(texts.Count);
+            
+            foreach (var entry in texts)
             {
-                var pointer = this.m_textIndexes[entry.Key];
+                indexedTextsIndexes[entry.Key] = (int)writer.Position;
+                writer.WriteUTF(entry.Text);
+                if (entry.IsDiacritical)
+                {
+                    undiacriticalIndexes[entry.Key] = (int)writer.Position;
+                    writer.WriteUTF(entry.UndiacriticalText);
+                }
+            }
 
-                this.m_writer.WriteInt(entry.Key);
-                this.m_writer.WriteBoolean(entry.IsDiacritical);
-                this.m_writer.WriteInt(pointer);
+            return new(indexedTextsIndexes, undiacriticalIndexes);
+        }
+        private static void writeIndexedTextsTable(BigEndianWriter writer, Dictionary<int, int> indexes, Dictionary<int, int> undiacriticalIndexes, List<I18nIndexedText> texts)
+        {
+            foreach (var entry in texts)
+            {
+                var pointer = indexes[entry.Key];
+
+                writer.WriteInt(entry.Key);
+                writer.WriteBoolean(entry.IsDiacritical);
+                writer.WriteInt(pointer);
 
                 if (entry.IsDiacritical)
                 {
-                    var undiacPointer = this.m_undiacriticalTextIndexes[entry.Key];
-                    this.m_writer.WriteInt(undiacPointer);
+                    var undiacPointer = undiacriticalIndexes[entry.Key];
+                    writer.WriteInt(undiacPointer);
                 }
             }
         }
-        private void writeNamedTextIndexes()
-        {
-            foreach (var entry in m_namedTexts)
-            {
-                var pointer = this.m_namedTextIndexes[entry.Key];
 
-                this.m_writer.WriteUTF(entry.Key);
-                this.m_writer.WriteInt(pointer);
-            }
-        }
-        private void writeSortedTextIndexes()
+        private static Dictionary<string, int> writeNamedTexts(BigEndianWriter writer, List<I18nNamedText> texts)
         {
-            foreach (var entry in m_texts)
+            var indexes = new Dictionary<string, int>(texts.Count);
+            
+            foreach (var namedText in texts)
             {
-                this.m_writer.WriteInt(entry.Key);
+                indexes[namedText.Key] = (int)writer.Position;
+                writer.WriteUTF(namedText.Text);
             }
-        }
 
-        private void writeTexts()
-        {
-            foreach (var entry in m_texts)
-            {
-                this.m_textIndexes[entry.Key] = (int)this.m_writer.Position;
-                this.m_writer.WriteUTF(entry.Text);
-                if (entry.IsDiacritical)
-                {
-                    this.m_undiacriticalTextIndexes[entry.Key] = (int)this.m_writer.Position;
-                    this.m_writer.WriteUTF(entry.UndiacriticalText);
-                }
-            }
+            return indexes;
         }
-        private void writeNamedTexts()
+        private static void writeNamedTextsTable(BigEndianWriter writer, Dictionary<string, int> indexes, List<I18nNamedText> texts)
         {
-            foreach (var entry in m_namedTexts)
+            foreach (var entry in texts)
             {
-                this.m_namedTextIndexes[entry.Key] = (int)this.m_writer.Position;
-                this.m_writer.WriteUTF(entry.Text);
-            }
-        }
+                var pointer = indexes[entry.Key];
 
-        public void Dispose()
+                writer.WriteUTF(entry.Key);
+                writer.WriteInt(pointer);
+            }
+        }
+        
+        private static void writeSortedIndexedTextsTable(BigEndianWriter writer, List<I18nIndexedText> texts)
         {
-            this.m_writer.Dispose();
+            texts.Sort((a, b) => a.Key - b.Key);
+            
+            foreach (var entry in texts)
+                writer.WriteInt(entry.Key);
         }
     }
 }

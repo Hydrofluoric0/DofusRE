@@ -2,146 +2,143 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 
 namespace DofusRE.I18n
 {
-    public class I18nReader : IDisposable
+    public static class I18nReader
     {
-        private BigEndianReader m_reader;
-        private Dictionary<int, int> m_textIndexes;
-        private Dictionary<int, int> m_sortedTextIndexes;
-        private Dictionary<string, int> m_namedTextIndexes;
-        private Dictionary<int, int> m_undiacriticalTextIndexes;
-
-        private Dictionary<int, I18nIndexedText> m_indexedTexts;
-        private Dictionary<string, I18nNamedText> m_namedTexts;
-
-        public Dictionary<int, I18nIndexedText> IndexedTexts => m_indexedTexts;
-        public Dictionary<string, I18nNamedText> NamedTexts => m_namedTexts;
-
-        public I18nReader(string filepath)
+        public static List<I18nText> Read(string path)
         {
-            this.m_indexedTexts = new Dictionary<int, I18nIndexedText>();
-            this.m_namedTexts = new Dictionary<string, I18nNamedText>();
+            using var reader = new BigEndianReader(path);
 
-            this.m_textIndexes = new Dictionary<int, int>();
-            this.m_namedTextIndexes = new Dictionary<string, int>();
-            this.m_sortedTextIndexes = new Dictionary<int, int>();
-            this.m_undiacriticalTextIndexes = new Dictionary<int, int>();
-
-            this.m_reader = new BigEndianReader(filepath);
+            var indexes = readIndexedTextIndexes(reader);
+            var indexedTextIndexes = indexes.Item1;
+            var undiacriticalTextIndexes = indexes.Item2;
+            var namedTextIndexes = readNamedTextIndexes(reader);
+            var sortedTextIndexes = readSortedTextIndexes(reader);
+            var indexedTexts = readIndexedTexts(reader, indexedTextIndexes, undiacriticalTextIndexes);
+            var namedTexts = readNamedTexts(reader, namedTextIndexes);
+            
+            var texts = indexedTexts.Concat<I18nText>(namedTexts).ToList();
+            return texts;
         }
 
-        public void Read()
+        private static Tuple<Dictionary<int, int>, Dictionary<int, int>> readIndexedTextIndexes(BigEndianReader reader)
         {
-            readTextIndexes();
-            readNamedTextIndexes();
-            readSortedTextIndexes();
-            readTexts();
-            readNamedTexts();
-
-            Dispose();
-        }
-
-        private void readTextIndexes()
-        {
-            var indexesPointer = this.m_reader.ReadInt();
-            this.m_reader.Seek(indexesPointer, SeekOrigin.Begin);
-            var indexesLength = this.m_reader.ReadInt();
+            var indexedTextIndexes = new Dictionary<int, int>();
+            var undiacriticalTextIndexes = new Dictionary<int, int>();
+            
+            var indexesPointer = reader.ReadInt();
+            reader.Seek(indexesPointer, SeekOrigin.Begin);
+            var indexesLength = reader.ReadInt();
 
             for (uint i = 0; i < indexesLength; i += 9)
             {
-                var key = this.m_reader.ReadInt();
-                var diacriticalText = this.m_reader.ReadBoolean();
-                var pointer = this.m_reader.ReadInt();
-
-                this.m_textIndexes[key] = pointer;
+                var key = reader.ReadInt();
+                var diacriticalText = reader.ReadBoolean();
+                var pointer = reader.ReadInt();
+                
+                indexedTextIndexes[key] = pointer;
 
                 if (diacriticalText)
                 {
                     i += 4;
-                    this.m_undiacriticalTextIndexes[key] = this.m_reader.ReadInt();
+                    undiacriticalTextIndexes[key] = reader.ReadInt();
                 }
             }
-        }
 
-        private void readNamedTextIndexes()
+            return new(indexedTextIndexes, undiacriticalTextIndexes);
+        }
+        
+        private static Dictionary<string, int> readNamedTextIndexes(BigEndianReader reader)
         {
-            var indexesLength = this.m_reader.ReadInt();
+            var namedTextIndexes = new Dictionary<string, int>();
+            var indexesLength = reader.ReadInt();
+
             do
             {
-                var position = this.m_reader.Position;
-                var key = this.m_reader.ReadUTF();
-                var pointer = this.m_reader.ReadInt();
+                var position = reader.Position;
+                var key = reader.ReadUTF();
+                var pointer = reader.ReadInt();
 
-                this.m_namedTextIndexes[key] = pointer;
+                namedTextIndexes[key] = pointer;
 
-                var delta = (int)(this.m_reader.Position - position);
+                var delta = (int)(reader.Position - position);
                 indexesLength -= delta;
             }
             while (indexesLength > 0);
-        }
 
-        private void readSortedTextIndexes()
+            return namedTextIndexes;
+        }
+        
+        private static Dictionary<int, int> readSortedTextIndexes(BigEndianReader reader)
         {
+            var sortedTextIndexes = new Dictionary<int, int>();
+            
             var index = 1;
-            var indexesLength = this.m_reader.ReadInt();
+            var indexesLength = reader.ReadInt();
+
             while (indexesLength > 0)
             {
-                var position = this.m_reader.Position;
-                var key = this.m_reader.ReadInt();
+                var position = reader.Position;
+                var key = reader.ReadInt();
 
-                this.m_sortedTextIndexes[key] = index++;
+                sortedTextIndexes[key] = index++;
 
-                var delta = (int)(this.m_reader.Position - position);
+                var delta = (int)(reader.Position - position);
                 indexesLength -= delta;
             }
-        }
 
-        private void readTexts()
+            return sortedTextIndexes;
+        }
+        
+        private static List<I18nIndexedText> readIndexedTexts(BigEndianReader reader, Dictionary<int, int> textIndexes, Dictionary<int, int> undiacriticalTextIndexes)
         {
-            foreach (var entry in m_textIndexes)
+            var indexedTexts = new List<I18nIndexedText>(textIndexes.Count);
+            
+            foreach (var entry in textIndexes)
             {
                 var key = entry.Key;
                 var pointer = entry.Value;
 
-                    m_reader.Seek(pointer, SeekOrigin.Begin);
-                var text = m_reader.ReadUTF();
+                reader.Seek(pointer, SeekOrigin.Begin);
+                var text = reader.ReadUTF();
 
-                var isDiac = this.m_undiacriticalTextIndexes.ContainsKey(key);
+                var isDiac = undiacriticalTextIndexes.ContainsKey(key);
                 if (isDiac)
                 {
-                    var undiacPointer = this.m_undiacriticalTextIndexes[key];
-                    m_reader.Seek(undiacPointer, SeekOrigin.Begin);
-                    var undiacText = m_reader.ReadUTF();
+                    var undiacPointer = undiacriticalTextIndexes[key];
+                    reader.Seek(undiacPointer, SeekOrigin.Begin);
+                    var undiacText = reader.ReadUTF();
 
-                    this.m_indexedTexts.Add(key, new I18nIndexedText(key, text, isDiac, undiacText));
+                    indexedTexts.Add(new I18nIndexedText(key, text, isDiac, undiacText));
                 }
                 else
                 {
-                    this.m_indexedTexts.Add(key, new I18nIndexedText(key, text, isDiac));
+                    indexedTexts.Add(new I18nIndexedText(key, text, isDiac));
                 }
             }
+
+            return indexedTexts;
         }
 
-        private void readNamedTexts()
+        private static List<I18nNamedText> readNamedTexts(BigEndianReader reader, Dictionary<string, int> namedTextIndexes)
         {
-            foreach (var entry in m_namedTextIndexes)
+            List<I18nNamedText> namedTexts = new List<I18nNamedText>(namedTextIndexes.Count);
+            
+            foreach (var entry in namedTextIndexes)
             {
                 var key = entry.Key;
                 var pointer = entry.Value;
 
-                this.m_reader.Seek(pointer, SeekOrigin.Begin);
-                var text = this.m_reader.ReadUTF();
+                reader.Seek(pointer, SeekOrigin.Begin);
+                var text = reader.ReadUTF();
 
-                this.m_namedTexts.Add(key, new I18nNamedText(key, text));
+                namedTexts.Add(new I18nNamedText(key, text));
             }
-        }
 
-        public void Dispose()
-        {
-            this.m_reader.Dispose();
+            return namedTexts;
         }
     }
 }

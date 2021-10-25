@@ -15,30 +15,39 @@ namespace DofusRE.Tests
             var output = Path.Combine(Path.GetTempPath(), $"output-{uuid}.d2i");
             File.Create(output).Close();
 
-            // reference reader
-            var refReader = new I18nReader(@"./assets/i18n_fr.d2i");
-            refReader.Read();
-            refReader.Dispose();
+            // read reference file
+            // then write it to an output file
+            // and read again from the output file
+            var refTexts = I18nReader.Read(@"./assets/i18n_fr.d2i");
+            I18nWriter.Write(output, refTexts);
+            var testTexts = I18nReader.Read(output);
 
-            var writer = new I18nWriter(output);
-            writer.Write(refReader.IndexedTexts.Values.ToList(), refReader.NamedTexts.Values.ToList());
-            writer.Dispose();
-
-            var testReader = new I18nReader(output);
-            testReader.Read();
-            testReader.Dispose();
-
-            Assert.True(refReader.IndexedTexts.Count == testReader.IndexedTexts.Count);
-            Assert.True(refReader.NamedTexts.Count == testReader.NamedTexts.Count);
-
-            var refList = refReader.IndexedTexts.ToDictionary(x => x.Key);
-            var testList = testReader.IndexedTexts.ToDictionary(x => x.Key);
-            foreach (var entry in refReader.IndexedTexts)
+            // compare read texts count
+            Assert.True(testTexts.Count == refTexts.Count);
+            
+            // deep compare every elements
+            for (int i = 0; i < refTexts.Count; i++)
             {
-                var refText = entry.Value;
-                var testText = testList[refText.Key].Value;
+                var reference = refTexts[i];
+                var test = testTexts[i];
 
-                Assert.True(refText == testText);
+                if (reference is I18nIndexedText)
+                    Assert.Equal((int)reference.Key, (int)test.Key);
+                else
+                    Assert.Equal((string)reference.Key, (string)test.Key);
+                
+                Assert.Equal(reference.Text, test.Text);
+                
+                if (reference is I18nIndexedText)
+                {
+                    var indexedReference = (I18nIndexedText) reference;
+                    var indexedTest = (I18nIndexedText) test;
+                    
+                    Assert.True(indexedReference.Key == indexedTest.Key);
+                    Assert.True(indexedReference.Text == indexedTest.Text);
+                    Assert.True(indexedReference.IsDiacritical == indexedTest.IsDiacritical);
+                    Assert.True(indexedReference.UndiacriticalText == indexedTest.UndiacriticalText);
+                }
             }
         }
     }
